@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dragon AR Pet</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0a; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; }
+    model-viewer { width: 100vw; height: 75vh; background: radial-gradient(ellipse at center, #1a1a2e, #0a0a0a); }
+    .title { color: #ff6b00; font-size: 18px; font-weight: bold; padding: 10px; letter-spacing: 2px; }
+    .hint { color: #ffffff33; font-size: 11px; padding: 4px; text-align: center; }
+    .ar-btn { background: #ff6b00; color: white; border: none; padding: 12px 28px; border-radius: 30px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #ff6b0088; position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); }
+    .anim-btn { background: rgba(0,0,0,0.8); color: #ff6b00; border: 1.5px solid #ff6b00; padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .anim-btn.active { background: #ff6b00; color: white; }
+
+    /* Normal mode controls */
+    #normalControls { display: flex; gap: 8px; padding: 8px 12px; flex-wrap: wrap; justify-content: center; }
+
+    /* AR overlay — this slot renders ON TOP of AR camera */
+    #ar-overlay {
+      position: absolute;
+      bottom: 80px;
+      left: 0; right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+    }
+    #ar-overlay .panel {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: rgba(0,0,0,0.75);
+      padding: 12px 16px;
+      border-radius: 24px;
+      border: 1px solid #ff6b0066;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">🐉 Dragon AR Pet</div>
+
+  <model-viewer id="dragon"
+    src="https://raw.githubusercontent.com/Aditya08q/ar-assets/main/dragon_final.glb"
+    ar
+    ar-modes="scene-viewer webxr quick-look"
+    camera-controls
+    auto-rotate
+    autoplay
+    shadow-intensity="1.5"
+    exposure="1.2"
+    environment-image="legacy"
+    alt="Dragon AR Pet">
+
+    <!-- This slot overlays on AR camera view -->
+    <div slot="ar-button" style="position:absolute;bottom:0;left:0;right:0;">
+      <div id="ar-overlay">
+        <div class="panel" id="arBtns"></div>
+      </div>
+      <button class="ar-btn" onclick="document.getElementById('dragon').activateAR()">
+        🐉 Place Dragon in AR
+      </button>
+    </div>
+
+  </model-viewer>
+
+  <div id="normalControls">
+    <div class="hint">Loading animations…</div>
+  </div>
+  <div class="hint">Pinch to zoom • Drag to rotate</div>
+
+  <script>
+    const viewer = document.getElementById('dragon');
+
+    function buildButtons(container) {
+      container.innerHTML = '';
+      const anims = viewer.availableAnimations;
+      if (!anims || anims.length === 0) {
+        container.innerHTML = '<div class="hint">No animations</div>';
+        return;
+      }
+      anims.forEach((name, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'anim-btn' + (i === 0 ? ' active' : '');
+        btn.textContent = '▶ ' + name;
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          viewer.animationName = name;
+          viewer.play();
+          document.querySelectorAll('.anim-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.anim-btn').forEach(b => {
+            if (b.textContent === btn.textContent) b.classList.add('active');
+          });
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    viewer.addEventListener('load', () => {
+      buildButtons(document.getElementById('normalControls'));
+      buildButtons(document.getElementById('arBtns'));
+      if (viewer.availableAnimations.length > 0) {
+        viewer.animationName = viewer.availableAnimations[0];
+        viewer.play();
+      }
+    });
+  </script>
+</body>
+</html>
